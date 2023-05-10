@@ -4,6 +4,7 @@ from sqlalchemy import text
 import json
 from decimal import Decimal
 from datetime import datetime
+from model import SO_Header, SO_Detail
 
 test = FastAPI()
 class DecimalEncoder(json.JSONEncoder):
@@ -43,31 +44,63 @@ class CustomJSONEncoder(json.JSONEncoder):
 async def for_sales_order_print():
     with engine.connect() as con:
         header = con.execute(text("exec uspg_atSalesOrder0_Select @Option=51,@Company_Code=3125098,@So_Sys_No=3635362"))
-        headerfetch = header.fetchall()        
-        headerkeys = header.keys()
+        headerfetch = header.fetchone()        
+        # headerkeys = header.keys()
+        
         # headerresult = [dict(zip(headerkeys, row))for row in headerfetch]
-        headerresult = dict(zip(headerkeys, headerfetch))
+        # headerresult = dict(zip(headerkeys, headerfetch))
        
-        json_printheader = json.dumps(headerresult, default = str)
+        main_table = SO_Header(
+                SOSysNo=headerfetch[0],
+                SODocNo=headerfetch[1],
+                SODate=headerfetch[3],
+                SOStatus=headerfetch[4],
+                CustomerCode=headerfetch[5],
+                CustomerName=headerfetch[6],
+                CustomerAddress=headerfetch[7],
+                CustomerMobilePhoneNo=headerfetch[8],
+                TOP=headerfetch[9],
+                TotalAmount=headerfetch[10],
+                SalesEmployeeNo=headerfetch[11], 
+                SalesemployeeName=headerfetch[12],
+                Items=[],     
+        )
 
-        detail = con.execute(text("exec uspg_atSalesOrder1_Select @Option=50,@So_Sys_No=3635362"))
         detail = con.execute(text("exec uspg_atSalesOrder1_Select @Option=50,@So_Sys_No=3635362"))
         detailfetch = detail.fetchall()   
-        detailkeys = detail.keys()
+        # detailkeys = detail.keys()
+
+      
+
+        for row in detailfetch:
+            itemdetail = SO_Detail(
+                ItemCode=row[0],
+                ItemName=row[1],
+                QtyDemand=row[2],
+                ItemPrice=row[3],
+                DiscPercent=row[4],
+                DiscAmount=row[5],
+                LineTotal=row[6],
+                QtySupplied=row[7],
+            )
+            main_table.Items.append(itemdetail)
+
+
+        return main_table
+
+
+        
       
         
-        detailresult = [dict(zip(detailkeys, row))for row in detailfetch]     
+        # detailresult = [dict(zip(detailkeys, row))for row in detailfetch]     
        
-
-        headerresult['Items'] = detailresult
+        # detailresult = []
+        # headerresult['Items'] = detailresult
 
        
-        response_json = json.dumps(headerresult, cls=DecimalEncoder, default=str)
+        # response_json = json.dumps(headerresult, default = str)
 
 
-        return {
-            response_json
-        }   
 
     
              
@@ -81,9 +114,6 @@ async def for_sales_order_print():
 # test = FastAPI()
 
 
-
-
-# # JSON encoder classes for handling decimal and datetime objects
 # class DecimalEncoder(json.JSONEncoder):
 #     def default(self, obj):
 #         if isinstance(obj, Decimal):
