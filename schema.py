@@ -30,7 +30,7 @@ class SO_Header(BaseModel):
     TotalAmount: Decimal
     SalesEmployeeNo: Optional[str] = None
     SalesEmployeeName: str
-    Item: Optional [List[SO_Detail]] = []
+    Items: Optional [List[SO_Detail]] = []
 
     class Config :
         orm_mode = True
