@@ -95,13 +95,52 @@ def get_header_sales_order_crud(db:Session,get_id:int):
 
 
 def get_all_sales_order(db: Session, get_id: int):
-    data_header = get_header_sales_order_crud(db, get_id)
-    data_detail = get_detail_sales_order_crud(db, get_id)
-    
-    header_schema = schema.SO_Header.from_orm(data_header)
-    detail_schema = [schema.SO_Detail.from_orm(row) for row in data_detail]
-    
+    header = db.query(model.SO_Header.SO_SYS_NO.label('SOSysNo'),
+                      model.SO_Header.SO_DOC_NO.label('SODocNo'),   
+                      model.SO_Header.SO_DATE.label('SODate'),
+                      model.SO_Header.SO_STATUS.label('SOStatus'),
+                      model.SO_Header.CUST_CODE.label('CustomerCode'),
+                      model.Customer.CUSTOMER_NAME.label('CustomerName'),
+                      label('CustomerAddress', func.concat(model.SO_Header.DLVR_ADDR, ', ', model.SO_Header.DLVR_ADDR1, ', ', model.SO_Header.DLVR_ADDR2)),
+                      model.Customer.CUST_MOBILE_PHONE.label('CustomerMobilePhoneNo'),
+                      model.SO_Header.TOP_CODE.label('TOP'),
+                      model.SO_Header.TOTAL.label('TotalAmount'),
+                      model.SO_Header.SALES_EMP_NO.label('SalesEmployeeNo'),
+                      model.Employee.EMPLOYEE_NAME.label('SalesEmployeeName')
+    ).join(model.Employee, model.SO_Header.SALES_EMP_NO==model.Employee.EMPLOYEE_NO, isouter=True
+    ).join(model.Customer, model.SO_Header.CUST_CODE==model.Customer.CUSTOMER_CODE,isouter=True
+    ).filter(model.SO_Header.SO_SYS_NO==get_id).order_by(model.SO_Header.SO_SYS_NO).first()
 
+    if header is None :
+        return None
+    
+    detail = db.query(model.SO_Detail.ITEM_CODE.label('ItemCode'),
+                      model.Item.ITEM_NAME.label('ItemName'),
+                      model.SO_Detail.QTY_DEMAND.label('QtyDemand'),
+                      model.SO_Detail.PRICE.label('ItemPrice'),
+                      model.SO_Detail.DISC_PERCENT.label('DiscPercent'),
+                      model.SO_Detail.DISC_AMOUNT.label('DiscAmount'),
+                      label('LineTotal', func.sum(model.SO_Detail.QTY_DEMAND*(model.SO_Detail.PRICE - model.SO_Detail.DISC_REQ_AMOUNT))),
+                      model.SO_Detail.QTY_SUPPLY.label('QtySupplied')
+  
+    ).join(model.Item, model.SO_Detail.ITEM_CODE == model.Item.ITEM_CODE, isouter=True
+    ).filter(model.SO_Detail.SO_SYS_NO == get_id
+    ).group_by(
+        model.SO_Detail.SO_SYS_NO,
+        model.SO_Detail.ITEM_CODE,  
+        model.Item.ITEM_NAME,
+        model.SO_Detail.QTY_DEMAND,
+        model.SO_Detail.PRICE,
+        model.SO_Detail.DISC_PERCENT,
+        model.SO_Detail.DISC_AMOUNT,
+        model.SO_Detail.QTY_SUPPLY
+    ).order_by(model.SO_Detail.SO_SYS_NO).all()
+
+    response = {}
+    response.update(header._asdict())
+    response["Item"] = [item._asdict() for item in detail]
+
+    return response
     # header = db.query(model.SO_Header).filter(model.SO_Header.SO_SYS_NO==get_id).order_by(model.SO_Header.SO_SYS_NO).first()
     # # detail = db.query(model.SO_Header).filter(model.SO_Detail.so_sys_no==get_id).order_by(model.SO_Header.so_sys_no).all()
     # details = db.query(model.SO_Detail).filter(model.SO_Detail.SO_SYS_NO == get_id).order_by(model.SO_Detail.SO_SYS_NO).all()
@@ -118,5 +157,4 @@ def get_all_sales_order(db: Session, get_id: int):
     #     header_schema.Item.append(detail_schema)
     # return header_schema
 
-    return header_schema
     
