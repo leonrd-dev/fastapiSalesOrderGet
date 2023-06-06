@@ -138,7 +138,7 @@ def get_all_sales_order(db: Session, get_id: int):
 
     response = {}
     response.update(header._asdict())
-    response["Item"] = [item._asdict() for item in detail]
+    response["Items"] = [item._asdict() for item in detail]
 
     return response
     # header = db.query(model.SO_Header).filter(model.SO_Header.SO_SYS_NO==get_id).order_by(model.SO_Header.SO_SYS_NO).first()
