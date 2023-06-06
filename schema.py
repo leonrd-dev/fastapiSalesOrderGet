@@ -4,27 +4,33 @@ from decimal import Decimal
 import datetime
 
 class SO_Detail(BaseModel):
-    ITEM_CODE: str
-    QTY_DEMAND: Decimal
-    DISC_PERCENT: Decimal
-    DISC_AMOUNT: Decimal
-    QTY_SUPPLY: Decimal
-    SO_SYS_NO: int
+    ItemName: str
+    ItemName: str
+    QtyDemand: Decimal
+    ItemPrice : Decimal
+    DiscPercent: Decimal
+    DiscAmount: Decimal
+    LineTotal: Decimal
+    QtySupplied: Decimal
 
+    
     class Config :
         orm_mode = True
 
 class SO_Header(BaseModel):
-    SO_SYS_NO: int
-    SO_DOC_NO: str
-    SO_DATE: datetime.date
-    SO_STATUS: str
-    CUST_CODE: str
-    TOP_CODE: str
-    TOTAL: Decimal
-    SALES_EMP_NO: Optional[str] = None
-    # Item:Optional[List[SO_Detail]] = []
-    Item: List[SO_Detail] = []
+    SOSysNo: int
+    SODocNo: str
+    SODate: datetime.date
+    SOStatus: str
+    CustomerCode: str
+    CustomerName : str
+    CustomerAddress : str
+    CustomerMobilePhoneNo : str
+    TOP: str
+    TotalAmount: Decimal
+    SalesEmployeeNo: Optional[str] = None
+    SalesEmployeeName: str
+    Item: Optional [List[SO_Detail]] = []
 
     class Config :
         orm_mode = True
