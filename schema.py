@@ -4,7 +4,7 @@ from decimal import Decimal
 import datetime
 
 class SO_Detail(BaseModel):
-    ItemName: str
+    ItemCode: str
     ItemName: str
     QtyDemand: Decimal
     ItemPrice : Decimal
